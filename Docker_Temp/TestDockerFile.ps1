@@ -1,5 +1,4 @@
-﻿[CmdletBinding()]
-      param (
+﻿      param (
 	 [parameter(mandatory=$true)]$USERNAME,
 	[parameter(mandatory=$true)] $GROUP,
 	[parameter(mandatory=$true)]$DLLNAME
