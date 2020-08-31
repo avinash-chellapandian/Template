@@ -1,6 +1,4 @@
-﻿function TestDockerFile {
-
-[CmdletBinding()]
+﻿[CmdletBinding()]
       param (
 	 [parameter(mandatory=$true)]$USERNAME,
 	[parameter(mandatory=$true)] $GROUP,
@@ -15,5 +13,3 @@ $content = (Get-Content -Path $env:temp\Kube-Generate\Tempalate.txt).Replace('$U
 Remove-Item .\Deployment_new\ -Confirm:$true
 New-Item .\Deployment_new\ -ItemType Directory
 $content | Out-File -FilePath .\Deployment_new\Dockerfile
-
-}
