@@ -1,5 +1,5 @@
 ﻿#Generated Time: $Timestamp
-FROM microsoft/dotnet:$DOTNETVERSION-aspnetcore-runtime AS base
+FROM microsoft/dotnet:$IMAGETYPE-aspnetcore-runtime AS base
 ENV HOME=/home/$USERNAME
 RUN mkdir -p ${HOME}
 
