@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "$ServiceName.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "$ServiceName.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "$ServiceName.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "$ServiceName.selectorLabels" . | nindent 8 }}
+        {{- include "$ServiceName.aadpodidbindingLabel" . | nindent 8 }}
+        {{- include "$ServiceName.servicelabelLabel" . | nindent 8 }}
+    spec:
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      serviceAccountName: {{ include "$ServiceName.serviceAccountName" . }}
+      dnsConfig:
+        options:
+        - name: single-request-reopen
+        - name: ndots
+          value: "3"
+      securityContext:
+        {{- toYaml .Values.po$ServiceNameecurityContext | nindent 8 }}
+      volumes:
+       - name: cache-volume
+         emptyDir: {}
+      containers:
+        - name: {{ include "$ServiceName.fullname" . }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+          - name: ASPNETCORE_ENVIRONMENT
+            value: "{{ .Values.ASPNETCORE_ENVIRONMENT }}"
+          - name: ASPNETCORE_TEMP
+            value: {{ .Values.volume.mountPath}}
+          volumeMounts:
+           - mountPath: {{ .Values.volume.mountPath}}
+             name: cache-volume
+          ports:
+            - name: https
+              containerPort: 5001
+              protocol: TCP
+            #- name: https
+             # containerPort: 443
+              #protocol: TCP
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          #livenessProbe:
+           # httpGet:
+            #  path: /
+             # port: http
+          readinessProbe:
+            httpGet:
+              httpHeaders:
+              - name: Host
+                value: {{ .Values.readinessprobe.hostHeader }}
+              scheme: HTTPS
+              path: {{ .Values.readinessprobe.path }}
+              port: 5001
+            perio$ServiceNameecon$ServiceName: 5
+            timeoutSecon$ServiceName: 1
+            successThreshold: 1
+            initialDelaySecon$ServiceName: 600
+            #perio$ServiceNameecon$ServiceName: {{ .Values.readinessprobe.perio$ServiceNameecon$ServiceName }}
+            #timeoutSecon$ServiceName: {{ .Values.readinessprobe.timeoutSecon$ServiceName }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
