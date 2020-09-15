@@ -1,0 +1,42 @@
+pool:
+  name: Universal Store vNext
+variables:
+  reponame: 'rods'
+
+steps:
+- task: NuGetToolInstaller@0
+  displayName: 'Use NuGet 4.6.2'
+  inputs:
+    versionSpec: 4.6.2
+
+- task: NuGetCommand@2
+  displayName: 'NuGet restore'
+  inputs:
+    restoreSolution: $CSPROJPATH
+    feedsToUse: config
+    nugetConfigPath: .nuget/NuGet.config
+    externalFeedCredentials: 'msblox-AzureGenevaMonitoring, Official Universal Store MSAzure connection'
+
+- task: UseDotNet@2
+  displayName: 'Use .NET Core sdk $VERSION'
+  inputs:
+    version: $VERSION
+
+- task: DotNetCoreCLI@2
+  displayName: 'dotnet publish'
+  inputs:
+    command: publish
+    publishWebProjects: false
+    projects: '**/$CSPROJNAME.csproj'
+    arguments: '-o $(Build.ArtifactStagingDirectory)/services'
+    zipAfterPublish: false
+    modifyOutputPath: false
+
+- task: CopyFiles@2
+  displayName: 'Copy Files to: $(Build.ArtifactStagingDirectory)'
+  inputs:
+    SourceFolder: '$(agent.builddirectory)'
+    TargetFolder: '$(Build.ArtifactStagingDirectory)'
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Artifact: drop'
