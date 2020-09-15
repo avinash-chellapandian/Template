@@ -18,9 +18,9 @@ steps:
     externalFeedCredentials: 'msblox-AzureGenevaMonitoring, Official Universal Store MSAzure connection'
 
 - task: UseDotNet@2
-  displayName: 'Use .NET Core sdk $VERSION'
+  displayName: 'Use .NET Core sdk $SDKVERSION'
   inputs:
-    version: $VERSION
+    version: $SDKVERSION
 
 - task: DotNetCoreCLI@2
   displayName: 'dotnet publish'
