@@ -1,7 +1,7 @@
 pool:
   name: Universal Store vNext
 variables:
-  reponame: 'rods'
+  reponame: '$REPONAME'
 
 steps:
 - task: NuGetToolInstaller@0
