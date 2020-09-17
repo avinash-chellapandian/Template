@@ -1,42 +1,74 @@
 pool:
-  name: Universal Store vNext
+  name: Azure Pipelines
+  
 variables:
-  reponame: '$REPONAME'
+  BuildPlatform: 'x64'
+  BuildConfiguration: 'Release'
 
 steps:
 - task: NuGetToolInstaller@0
-  displayName: 'Use NuGet 4.6.2'
+  displayName: 'Use NuGet 4.3.0'
   inputs:
-    versionSpec: 4.6.2
+    versionSpec: 4.3.0
 
-- task: NuGetCommand@2
-  displayName: 'NuGet restore'
+- task: DotNetCoreCLI@2
+  displayName: 'dotnet restore'
   inputs:
-    restoreSolution: $CSPROJPATH
+    command: restore
+    projects: 'Source/DeviceSymptomsHistory-DotNetCore/DeviceSymptomsHistoryWebApp/DeviceSymptomsHistoryWebApp.csproj'
     feedsToUse: config
-    nugetConfigPath: .nuget/NuGet.config
-    externalFeedCredentials: 'msblox-AzureGenevaMonitoring, Official Universal Store MSAzure connection'
+    nugetConfigPath: NugetConfig/nuget.config
 
-- task: UseDotNet@2
-  displayName: 'Use .NET Core sdk $SDKVERSION'
+- task: DotNetCoreCLI@2
+  displayName: 'dotnet build'
   inputs:
-    version: $SDKVERSION
+    projects: 'Source/DeviceSymptomsHistory-DotNetCore/DeviceSymptomsHistoryWebApp/DeviceSymptomsHistoryWebApp.csproj'
+    arguments: '-c Release -o .\app\build'
 
 - task: DotNetCoreCLI@2
   displayName: 'dotnet publish'
   inputs:
     command: publish
-    publishWebProjects: false
-    projects: '**/$CSPROJNAME.csproj'
-    arguments: '-o $(Build.ArtifactStagingDirectory)/services'
+    arguments: '-c Release -o .\app\publish'
     zipAfterPublish: false
     modifyOutputPath: false
 
 - task: CopyFiles@2
   displayName: 'Copy Files to: $(Build.ArtifactStagingDirectory)'
   inputs:
-    SourceFolder: '$(agent.builddirectory)'
     TargetFolder: '$(Build.ArtifactStagingDirectory)'
 
 - task: PublishBuildArtifacts@1
   displayName: 'Publish Artifact: drop'
+
+- task: Docker@2
+  displayName: buildAndPush
+  inputs:
+    containerRegistry: 'SUPPLYCHAIN_ACR_ACRSCEASTUSXE5D'
+    repository: '$(acrImageName)'
+    Dockerfile: 'Source/DeviceSymptomsHistory-DotNetCore/Dockerfile'
+    buildContext: '$(Build.ArtifactStagingDirectory)'
+
+- bash: |
+   # Write your commands here
+   
+   echo 'Variables: '
+   
+   env | sort
+   
+   echo "-----------------------"
+   docker images | grep ${BUILD_BUILDNUMBER} | cut -d " " -f 1
+   echo "-----------------------"
+   
+   image=`docker images | grep ${BUILD_BUILDNUMBER} | cut -d " " -f 1`
+   mkdir -p $(Pipeline.Workspace)/variables
+   echo "$image" > $(Pipeline.Workspace)/variables/image
+   
+  displayName: 'Publish Build Image'
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Artifact: VARIABLES'
+  inputs:
+    PathtoPublish: '$(Pipeline.Workspace)/variables'
+    ArtifactName: VARIABLES
+
